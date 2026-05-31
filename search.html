@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>tSearch: Глобальный мультипоиск</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      padding: 20px;
+      background-color: #f4f6f9;
+      color: #333;
+      margin: 0;
+    }
+    
+    /* Двухпанельный макет через CSS Grid */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+    
+    /* Левая панель фильтрации (Сайдбар) */
+    .sidebar {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+    
+    .sidebar-section {
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+    }
+    
+    .sidebar-section:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    .sidebar-title {
+      font-weight: bold;
+      font-size: 13px;
+      color: #495057;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .filter-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    
+    .filter-select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+      background: white;
+    }
+    
+    /* Интерактивные табы/кнопки источников в левой панели */
+    .tracker-filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    
+    .tracker-toggle-btn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #495057;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease-in-out;
+    }
+    
+    .tracker-toggle-btn:hover {
+      background: #e9ecef;
+      border-color: #ced4da;
+    }
+    
+    .tracker-toggle-btn.active {
+      background: #007bff;
+      border-color: #007bff;
+      color: white;
+    }
+    
+    .tracker-count-badge {
+      font-size: 11px;
+      background: rgba(0,0,0,0.08);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+    
+    .tracker-toggle-btn.active .tracker-count-badge {
+      background: rgba(255,255,255,0.25);
+      color: white;
+    }
+    
+    /* Кнопки авторизации/замков */
+    .login-trigger-btn {
+      background: none;
+      border: none;
+      color: #dc3545;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.2s;
+      margin-left: auto;
+    }
+    
+    .login-trigger-btn:hover {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: #bd2130;
+    }
+    
+    .login-trigger-btn.authorized {
+      color: #28a745;
+    }
+    
+    .login-trigger-btn.authorized:hover {
+      background-color: rgba(40, 167, 69, 0.1);
+    }
+    
+    /* Правая панель с контентом */
+    .main-content {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+    
+    h2 {
+      margin-top: 0;
+      color: #222;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 12px;
+      font-size: 22px;
+    }
+    
+    .meta-info {
+      color: #666;
+      margin-bottom: 15px;
+      font-size: 14px;
+      background: #eef2f7;
+      padding: 8px 12px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    
+    .status {
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 20px;
+      font-size: 14px;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 10px 15px;
+      border-radius: 4px;
+    }
+    
+    /* Таблица раздач */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    
+    th[data-sort] {
+      background: #f8f9fa;
+      text-align: left;
+      padding: 12px;
+      font-size: 14px;
+      color: #495057;
+      border-bottom: 2px solid #dee2e6;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      transition: background 0.2s;
+    }
+    
+    th[data-sort]:hover {
+      background: #e9ecef;
+      color: #212529;
+    }
+    
+    /* Стрелочки сортировки */
+    th[data-sort]::after {
+      content: " ↕";
+      font-size: 11px;
+      color: #bbb;
+      margin-left: 5px;
+    }
+    
+    th.sort-asc[data-sort]::after {
+      content: " ▲";
+      color: #007bff;
+    }
+    
+    th.sort-desc[data-sort]::after {
+      content: " ▼";
+      color: #007bff;
+    }
+    
+    td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #dee2e6;
+      font-size: 14px;
+      vertical-align: top;
+    }
+    
+    tr:hover {
+      background: #fdfdfe;
+    }
+    
+    /* Текстовые элементы внутри ячейки таблицы */
+    .title-text {
+      color: #212529;
+      font-weight: 500;
+      line-height: 1.4;
+      font-size: 15px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .category-link {
+      font-size: 12px;
+      color: #0056b3;
+      text-decoration: none;
+      font-weight: normal;
+    }
+    
+    .category-link:hover {
+      text-decoration: underline;
+      color: #003d80;
+    }
+    
+    /* Стилизация колонок с цифрами */
+    .seed { color: #28a745; font-weight: bold; width: 80px; font-size: 15px; }
+    .leech { color: #dc3545; font-weight: bold; width: 80px; font-size: 15px; }
+    .size { color: #495057; font-weight: 500; width: 100px; font-size: 14px; }
+    
+    /* Стили цветных бейджей возраста */
+    .age-badge {
+      font-size: 12px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 8px;
+      display: inline-block;
+    }
+    .age-today { background-color: #e2f5ea; color: #155724; border: 1px solid #c3e6cb; }
+    .age-yesterday { background-color: #e8f4fd; color: #004085; border: 1px solid #b8daff; }
+    .age-old { background-color: #f1f3f5; color: #495057; border: 1px solid #dee2e6; }
+    
+    .error-msg {
+      color: #dc3545;
+      background: #f8d7da;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 10px;
+      border: 1px solid #f5c6cb;
+    }
+    
+    #progress-counter {
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    /* Кастомный скроллбар для сайдбара трекеров */
+    .tracker-filter-list::-webkit-scrollbar { width: 4px; }
+    .tracker-filter-list::-webkit-scrollbar-track { background: #f1f3f5; }
+    .tracker-filter-list::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    
+    <!-- ЛЕВАЯ ПАНЕЛЬ ФИЛЬТРОВ (САЙДБАР) -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Ключевые слова</div>
+        <input type="text" id="filter-keywords" class="filter-input" placeholder="Искать в результатах...">
+        <input type="text" id="filter-exclude" class="filter-input" placeholder="Исключить слова...">
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">Размер файла (ГБ)</div>
+        <div style="display: flex; gap: 10px;">
+          <input type="number" id="filter-size-min" class="filter-input" placeholder="От" min="0" step="0.1">
+          <input type="number" id="filter-size-max" class="filter-input" placeholder="До" min="0" step="0.1">
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Дата добавления</div>
+        <select id="filter-date" class="filter-select">
+          <option value="all">За всё время</option>
+          <option value="1">За последние 24 часа</option>
+          <option value="7">За последнюю неделю</option>
+          <option value="30">За последний месяц</option>
+          <option value="365">За последний год</option>
+        </select>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Минимум Сидов</div>
+        <input type="number" id="filter-min-seeds" class="filter-input" placeholder="Например, 5" min="0">
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">Источники (Трекеры)</div>
+        <div id="tracker-toggles" class="tracker-filter-list">
+          <!-- Сюда search.js динамически добавит интерактивные табы сайтов и кнопки логина -->
+        </div>
+      </div>
+    </aside>
+    
+    <!-- ПРАВАЯ ПАНЕЛЬ С РЕЗУЛЬТАТАМИ МУЛЬТИПОИСКА -->
+    <main class="main-content">
+      <h2 id="search-title">Глобальный мультипоиск tSearch...</h2>
+      <div class="meta-info" id="meta-info">Запрос: </div>
+      <div class="status" id="status-text">Инициализация потоков данных...</div>
+      
+      <table id="results-table" style="display: none;">
+        <thead>
+          <tr>
+            <th data-sort="title">Возраст, название раздачи и категория</th>
+            <th data-sort="sizeBytes">Размер</th>
+            <th data-sort="seedsCount" class="sort-desc">Сиды</th>
+            <th data-sort="peersCount">Личи</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </main>
+    
+  </div>
+
+  <!-- Модульный запуск скрипта (Требование CSP в MV3) -->
+  <script type="module" src="search.js"></script>
+
+</body>
+</html>

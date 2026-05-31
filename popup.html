@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Настройки tSearch</title>
+  <style>
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 15px;
+      margin: 0;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+    
+    .header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #212529;
+    }
+    
+    .description {
+      font-size: 13px;
+      color: #6c757d;
+      line-height: 1.4;
+      margin-bottom: 15px;
+    }
+    
+    /* Контейнер списков скроллинга */
+    #selectors-container {
+      max-height: 280px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 15px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    /* Заголовки внутренних секций */
+    .section-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #495057;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 12px 0 6px 0;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .section-title:first-child {
+      margin-top: 0;
+    }
+    
+    /* Элементы списка (чекбоксы) */
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      margin: 6px 0;
+      cursor: pointer;
+      font-size: 13px;
+      user-select: none;
+      transition: color 0.15s ease;
+    }
+    
+    .checkbox-item:hover {
+      color: #007bff;
+    }
+    
+    .checkbox-item input {
+      margin-right: 10px;
+      cursor: pointer;
+      accent-color: #007bff; /* Современная стилизация чекбокса */
+    }
+    
+    /* Кнопка обновления базы парсеров с сервера */
+    .update-button {
+      width: 100%;
+      padding: 8px;
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+    
+    .update-button:hover {
+      background-color: #5a6268;
+    }
+
+    .update-button:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    /* Кнопка сохранения конфигурации */
+    .save-button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,123,255,0.2);
+      transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+    
+    .save-button:hover {
+      background-color: #0056b3;
+    }
+    
+    .save-button:active {
+      transform: scale(0.98);
+    }
+
+    .save-button:disabled {
+      cursor: not-allowed;
+    }
+    
+    /* Стилизация вебкит-скроллбара */
+    #selectors-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    #selectors-container::-webkit-scrollbar-track {
+      background: #f1f3f5;
+      border-radius: 4px;
+    }
+    #selectors-container::-webkit-scrollbar-thumb {
+      background: #ced4da;
+      border-radius: 4px;
+    }
+    #selectors-container::-webkit-scrollbar-thumb:hover {
+      background: #adb5bd;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h3>tSearch Настройки</h3>
+  </div>
+  
+  <div class="description">
+    Отметьте поисковые системы и торрент-трекеры, которые вы хотите использовать в общем списке глобального мультипоиска.
+  </div>
+  
+  <!-- Сюда popup.js динамически добавит секции и чекбоксы сайтов из реестра -->
+  <div id="selectors-container"></div>
+  
+  <!-- Кнопка принудительной синхронизации селекторов с удаленного сервера -->
+  <button id="update-parsers-btn" class="update-button">
+    🔄 Обновить селекторы трекеров
+  </button>
+  
+  <!-- Кнопка записи выбранных чекбоксов в локальное хранилище расширения -->
+  <button id="save-btn" class="save-button">Сохранить настройки</button>
+
+  <!-- Модульное подключение управляющего скрипта (Требование CSP в MV3) -->
+  <script type="module" src="popup.js"></script>
+
+</body>
+</html>
